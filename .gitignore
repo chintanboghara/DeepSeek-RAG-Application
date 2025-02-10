@@ -1,0 +1,10 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Logs and databases
+chatbot_logs.log
+chroma_db/
+
+# Environment variables
+.env
