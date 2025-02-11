@@ -18,14 +18,14 @@ This repository contains a Streamlit-based chatbot application that allows users
 
 - Python 3.7 or higher
 - [Ollama](https://ollama.com/) installed and running
-- (Optional) An AWS EC2 instance for deployment
+- A **GPU-enabled AWS EC2 instance** with a large amount of storage for handling large language models
 
 ### Installation Steps
 
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/chintanboghar/DeepSeek-RAG-Application.git
+   git clone https://github.com/chintanboghara/DeepSeek-RAG-Application.git
    cd DeepSeek-RAG-Application
    ```
 
@@ -45,19 +45,32 @@ This repository contains a Streamlit-based chatbot application that allows users
 
 ### Steps
 
-1. **Set Up EC2 Instance**
-
-   - Launch an AWS EC2 instance and configure security settings.
+1. **Set Up a GPU-Enabled EC2 Instance**
+   - Choose an AWS EC2 instance with a GPU (e.g., `g4dn.xlarge`, `p3.2xlarge`, or higher depending on your needs).
+   - Allocate sufficient storage (at least **100GB** recommended).
+   - Configure security settings to allow SSH and necessary ports for Streamlit.
 
 2. **Connect to EC2**
 
-   - SSH into your EC2 instance.
+   - SSH into your EC2 instance:
+     ```bash
+     ssh -i your-key.pem ubuntu@your-ec2-instance-ip
+     ```
 
 3. **Install Dependencies**
 
    - Update system packages:
      ```bash
      sudo apt update
+     ```
+   - Install GPU drivers (for NVIDIA instances):
+     ```bash
+     sudo apt install -y nvidia-driver-470
+     reboot
+     ```
+   - Verify GPU availability:
+     ```bash
+     nvidia-smi
      ```
    - Install Ollama:
      ```bash
@@ -74,7 +87,7 @@ This repository contains a Streamlit-based chatbot application that allows users
 
 4. **Install Python Dependencies**
 
-   - On your EC2 instance, clone this repository and install the Python dependencies:
+   - Clone the repository and install the Python dependencies:
      ```bash
      git clone https://github.com/chintanboghara/DeepSeek-RAG-Application.git
      cd DeepSeek-RAG-Application
@@ -88,33 +101,34 @@ This repository contains a Streamlit-based chatbot application that allows users
      python3 -m streamlit run app.py
      ```
 
-## Commands Reference
+## Testing the Model API using Postman
 
-Below are some useful commands for setting up and testing the model and app:
+### 1. Testing with a POST Request
 
-```sh
-# Update System Packages
-sudo apt update
+- **Step 1:** Open Postman and create a new **POST** request.
+- **Step 2:** Set the request URL to:
+  ```
+  http://localhost:11434/api/chat
+  ```
+- **Step 3:** Click on the **Body** tab, select **raw**, and choose **JSON** from the dropdown.
+- **Step 4:** Enter the following JSON:
+  ```json
+  {
+    "model": "deepseek-r1:8b",
+    "messages": [{ "role": "user", "content": "Write python script for hello world" }],
+    "stream": false
+  }
+  ```
+- **Step 5:** Click **Send** and review the response from the API.
 
-# Install Ollama
-curl -fsSL https://ollama.com/install.sh | sh
+### 2. Testing with a GET Request
 
-# Run the DeepSeek model
-ollama run deepseek-r1:7b
+*Note:* The main chat endpoint is designed to accept POST requests. However, if the API server provides a GET endpoint (such as a health or status check), you can test it as follows:
 
-# Check API Serving
-ollama serve
-
-# Test the model API
-curl http://localhost:11434/api/chat -d '{
-  "model": "deepseek-r1:8b",
-  "messages": [{ "role": "user", "content": "Write python script for hello world" }],
-  "stream": false
-}'
-
-# To install Python requirements
-python3 -m pip install -r requirements.txt
-
-# To run the Streamlit app
-python3 -m streamlit run app.py
-```
+- **Step 1:** Create a new **GET** request in Postman.
+- **Step 2:** Set the request URL to (example):
+  ```
+  http://localhost:11434/api/health
+  ```
+  *Replace `/api/health` with the actual GET endpoint if available.*
+- **Step 3:** Click **Send** and check the response to verify that the API server is running.
