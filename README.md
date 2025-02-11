@@ -1,3 +1,5 @@
+[![CodeQL Advanced](https://github.com/chintanboghara/DeepSeek-RAG-Application/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/chintanboghara/DeepSeek-RAG-Application/actions/workflows/codeql.yml)
+
 # DeepSeek RAG Application
 
 This repository contains a Streamlit-based chatbot application that allows users to upload a PDF file and ask questions about its contents. The app uses LangChain for document processing, ChromaDB for vector storage, and Ollama to serve the DeepSeek model for question answering.
