@@ -1,4 +1,5 @@
 [![CodeQL Advanced](https://github.com/chintanboghara/DeepSeek-RAG-Application/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/chintanboghara/DeepSeek-RAG-Application/actions/workflows/codeql.yml)
+[![Dependency review](https://github.com/chintanboghara/DeepSeek-RAG-Application/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/chintanboghara/DeepSeek-RAG-Application/actions/workflows/dependency-review.yml)
 
 # DeepSeek RAG Application
 
