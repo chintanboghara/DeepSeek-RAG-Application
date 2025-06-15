@@ -1,151 +1,165 @@
 # DeepSeek RAG Application
 
-This repository contains a Streamlit-based chatbot application that allows users to upload a PDF file and ask questions about its contents. The app uses LangChain for document processing, ChromaDB for vector storage, and Ollama to serve the DeepSeek model for question answering. This application leverages Retrieval-Augmented Generation (RAG) to combine the power of large language models with information retrieval from uploaded documents, enabling accurate and contextually relevant responses.
+A **Streamlit**-based Retrieval‑Augmented Generation (RAG) chatbot that lets you upload a PDF and ask natural‑language questions about its contents. Under the hood it uses:
+
+- **LangChain** for document loading & splitting  
+- **ChromaDB** as a vector store for semantic retrieval  
+- **Ollama** to serve the `deepseek-r1` LLM model in streaming mode  
 
 ## Features
 
-- **PDF Processing:** Upload a PDF, which is then split into chunks for processing.
-- **Retrieval-Augmented Generation (RAG):** Retrieve relevant document chunks based on user questions.
-- **Streaming Responses:** Get real-time streaming responses from the DeepSeek model via Ollama.
-- **Easy Deployment:** Run the application locally or deploy it on an AWS EC2 instance.
+- **PDF Processing**  
+  - Upload any PDF; it’s split into overlapping text chunks for semantic indexing.  
+- **Semantic Retrieval**  
+  - ChromaDB & OllamaEmbeddings create a retriever over your document.  
+- **Streaming Responses**  
+  - Get real‑time, token‑by‑token answers from the `deepseek-r1` model.  
+- **Configurable**  
+  - Tweak chunk size, overlap, model ID, and persistence paths via `.env`.  
+- **Extensible**  
+  - Modular codebase (ingest, vectorstore, LLM, UI) ready for testing & CI.
 
-## Setup & Installation
+## Architecture
 
-### Local Setup
+```text
+┌────────────┐    PDF file     ┌──────────────┐
+│  Streamlit │ ──────────────> │  ingest.py   │
+│     UI     │                 └──────────────┘
+└─────┬──────┘                       │
+      │ chunks                      ▼
+      │                      ┌──────────────┐
+      │                      │ vectorstore  │
+      │                      │  (ChromaDB)  │
+      │                      └──────────────┘
+      │                              │
+      │ retrieve                     ▼
+      │                      ┌──────────────┐
+      │                      │  llm.py      │
+      │                      │ (Ollama API) │
+      │                      └──────────────┘
+      │                              │
+      └──────────────────────────────┘
+                   answer (streamed)
+````
 
-#### Prerequisites
+## Prerequisites
 
-- Python 3.7 or higher
-- [Ollama](https://ollama.com/) installed and running (with the DeepSeek model pulled)
-- A machine with a GPU is recommended for handling large language models
+* **Python 3.7+**
+* **Ollama CLI** installed & your `deepseek-r1` model pulled
+* (Recommended) GPU-enabled machine for best performance
 
-#### Installation Steps
+## Quickstart (Local)
 
-1. **Clone the Repository**
+1. **Clone & enter repo**
 
    ```bash
    git clone https://github.com/chintanboghara/DeepSeek-RAG-Application.git
    cd DeepSeek-RAG-Application
    ```
 
-2. **Install Dependencies**
+2. **Create & activate venv**
 
    ```bash
-   python3 -m pip install -r requirements.txt
+   python3 -m venv .venv
+   source .venv/bin/activate
    ```
 
-3. **Ensure Ollama is Running**
-
-   - Pull the model: `ollama pull deepseek-r1:7b`
-   - Start the server: `ollama serve &`
-
-4. **Run the Application**
+3. **Install dependencies**
 
    ```bash
-   python3 -m streamlit run app.py
+   pip install -r requirements.txt
    ```
 
-### AWS Deployment
+4. **Prepare your `.env`**
+   Copy `.env.example` to `.env`, then edit values as needed.
 
-#### Prerequisites
-
-- A GPU-enabled AWS EC2 instance (e.g., `g4dn.xlarge` or higher)
-- At least 100GB of storage
-- SSH access and appropriate security group settings (allow ports for SSH, Streamlit, etc.)
-
-#### Deployment Steps
-
-1. **Connect to EC2**
-
-   ```bash
-   ssh -i your-key.pem ubuntu@your-ec2-instance-ip
-   ```
-
-2. **Update System Packages**
-
-   ```bash
-   sudo apt update
-   ```
-
-3. **Install GPU Drivers**
-
-   ```bash
-   sudo apt install -y nvidia-driver-470  # Adjust the driver version as needed
-   reboot
-   ```
-
-4. **Verify GPU Availability**
-
-   ```bash
-   nvidia-smi
-   ```
-
-5. **Install Ollama**
-
-   ```bash
-   curl -fsSL https://ollama.com/install.sh | sh
-   ```
-
-6. **Pull the DeepSeek Model**
+5. **Ensure Ollama server is running**
 
    ```bash
    ollama pull deepseek-r1:7b
-   ```
-
-7. **Start the Ollama Server**
-
-   ```bash
    ollama serve &
    ```
 
-8. **Install Python Dependencies**
+6. **Launch the Streamlit app**
+
+   ```bash
+   streamlit run app.py
+   ```
+
+7. **Visit** `http://localhost:8501` in your browser.
+
+## Configuration
+
+All runtime settings live in the `.env` file (loaded by `src/config.py`).
+
+| Variable             | Description                                | Default            |
+| -------------------- | ------------------------------------------ | ------------------ |
+| `OLLAMA_MODEL_ID`    | Ollama model identifier                    | `deepseek-r1:8b`   |
+| `CHUNK_SIZE`         | Maximum characters per text chunk          | `500`              |
+| `CHUNK_OVERLAP`      | Overlap characters between adjacent chunks | `100`              |
+| `CHROMA_PERSIST_DIR` | Directory for ChromaDB persistence         | `./chroma_db`      |
+| `LOG_FILE`           | Path to the application log file           | `chatbot_logs.log` |
+| `PAGE_TITLE`         | Streamlit page title                       | `PDF Q&A Chatbot`  |
+
+## AWS Deployment
+
+1. **Launch** a GPU EC2 instance (e.g. `g4dn.xlarge`) with at least 100 GB storage.
+2. **SSH in** and install NVIDIA drivers, Docker, and Ollama:
+
+   ```bash
+   sudo apt update && sudo apt install -y nvidia-driver-470 docker.io
+   curl -fsSL https://ollama.com/install.sh | sh
+   ```
+3. **Pull model & start server**
+
+   ```bash
+   ollama pull deepseek-r1:7b
+   ollama serve &
+   ```
+4. **Clone & install**
 
    ```bash
    git clone https://github.com/chintanboghara/DeepSeek-RAG-Application.git
    cd DeepSeek-RAG-Application
-   python3 -m pip install -r requirements.txt
+   pip3 install -r requirements.txt
    ```
-
-9. **Run the Chatbot App**
+5. **Run Streamlit on public port**
 
    ```bash
-   python3 -m streamlit run app.py
+   streamlit run app.py --server.port 8501 --server.address 0.0.0.0
    ```
+6. **Open** `http://<EC2_PUBLIC_IP>:8501` in your browser.
 
-   **Note:** Configure Streamlit to run on a specific port and ensure it’s accessible via the EC2 instance’s public IP.
+## Testing the Ollama API
 
-## Testing the Model API using Postman
+### POST `/api/chat`
 
-### 1. Testing with a POST Request
+```bash
+curl -X POST http://localhost:11434/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"model":"deepseek-r1:7b","messages":[{"role":"user","content":"Hello"}],"stream":false}'
+```
 
-- **Step 1:** Open Postman and create a new **POST** request.
-- **Step 2:** Set the request URL to:
-  ```
-  http://localhost:11434/api/chat
-  ```
-- **Step 3:** Click on the **Body** tab, select **raw**, and choose **JSON** from the dropdown.
-- **Step 4:** Enter the following JSON (ensure the model matches the one pulled, e.g., "deepseek-r1:7b"):
-  ```json
-  {
-    "model": "deepseek-r1:7b",
-    "messages": [{ "role": "user", "content": "Write a Python script for hello world" }],
-    "stream": false
-  }
-  ```
-- **Step 5:** Click **Send** and review the response from the API.
+### GET `/api/tags`
 
-### 2. Testing with a GET Request
-
-- **Step 1:** Create a new **GET** request in Postman.
-- **Step 2:** Set the request URL to:
-  ```
-  http://localhost:11434/api/tags
-  ```
-- **Step 3:** Click **Send** and check the response to verify that the API server is running and lists available models.
+```bash
+curl http://localhost:11434/api/tags
+```
 
 ## Usage
 
-1. **Upload a PDF:** Use the file uploader in the Streamlit app to upload a PDF document.
-2. **Processing:** The app will process the PDF, split it into chunks, and index it using ChromaDB.
-3. **Ask Questions:** Enter your questions in the chat input. The app will retrieve relevant information from the PDF and generate responses using the DeepSeek model.
-4. **Streaming Responses:** Answers will be streamed in real-time as they are generated.
+1. **Upload** your PDF via the Streamlit sidebar.
+2. **Ask** your question in the chat input.
+3. **Watch** the answer stream in real time.
+
+## Troubleshooting
+
+* **“Failed to process PDF”**
+
+  * Check if the file is encrypted or scanned images only.
+* **Ollama connection errors**
+
+  * Ensure `ollama serve` is running on `localhost:11434`.
+* **Slow responses**
+
+  * Try reducing `CHUNK_SIZE` or increasing compute resources.
