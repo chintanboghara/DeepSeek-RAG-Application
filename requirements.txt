@@ -1,6 +1,7 @@
-langchain
-chromadb
-langchain-community
-streamlit
-pymupdf
-ollama
+streamlit==1.24.1
+langchain==0.0.243
+langchain-community==0.1.2
+chromadb==0.3.35
+pymupdf==1.22.4
+ollama==0.2.1
+python-dotenv==1.0.0
